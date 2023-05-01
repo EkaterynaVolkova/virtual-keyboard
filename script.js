@@ -401,6 +401,10 @@ class VirtualKeyboard {
       let dataValue = value;
       if (keyObject['code'] === 32){
         dataValue = " ";
+      } else if (keyObject['code'] === 13) {
+        dataValue = "\n";
+      } else if ([17, 18, 91, 16, 20, 9, 8].includes(keyObject['code'])){
+        dataValue = "";
       }
       keyboard += `<span data-code="${keyObject['code']}" data-value="${dataValue}" class="${keyObject['class']}">${value}</span>`;
     });
@@ -412,20 +416,37 @@ class VirtualKeyboard {
   }
 
   setUpGeneralEvents(){
-    const textInput = document.querySelector('#text-input');
-
     document.addEventListener("keydown", (e) => {
       let code = e.key;
-      console.log(code);
+      let element;
+      let leftElement, rightElement;
       e.preventDefault();
+
       if (e.ctrlKey && e.altKey) {
         this.lang  =  (this.lang === 'en') ? 'ru' : 'en';
         this.switchLanguage();
+      }  else if (e.code === "Enter") {
+        element = document.querySelector('[data-code="13"]');
+      }  else if (e.code === "Backspace") {
+        element = document.querySelector('[data-code="8"]');
+      } else if (e.code === "Tab") {
+        element = document.querySelector('[data-code="9"]');
+      } else if ( e.altKey ) {
+        [leftElement, rightElement] = document.querySelectorAll('[data-code="18"]');
+        element = (e.location === 1) ? leftElement : rightElement;
+      } else if ( e.ctrlKey ) {
+        [leftElement, rightElement] = document.querySelectorAll('[data-code="17"]');
+        element = (e.location === 1) ? leftElement : rightElement;
+      } else if ( e.shiftKey ) {
+        [leftElement, rightElement] = document.querySelectorAll('[data-code="16"]');
+        element = (e.location === 1) ? leftElement : rightElement;
       } 
+      else {
+        element = document.querySelector(`[data-value="${code}"]`);
+      }
 
-      let element = document.querySelector(`[data-value="${code}"]`);
       if (element){
-        textInput.innerHTML += element.dataset.value;
+        element.click();
         element.classList.add("active-key");
       }
     });
@@ -445,13 +466,41 @@ class VirtualKeyboard {
   setUpClickEvents(){
     let textInput = document.querySelector('#text-input');
 
+    const backspaceClickHandler = () => {
+      if (textInput.selectionStart !== undefined) {
+        let startPosition = textInput.selectionStart;
+        let currentText = textInput.value;
+        if (currentText.length) {
+          textInput.value = currentText.substring(0,startPosition-1);
+          textInput.value += currentText.substring(startPosition);
+          textInput.selectionEnd = startPosition - 1;
+          textInput.selectionStart = textInput.selectionEnd;
+          textInput.focus();
+        }
+      }
+    }
+
     const keyClickHandler = (event) => {
       let element = event.target;
       let value = element.dataset.value;
-      textInput.innerHTML += value;
+      let startPosition = 0;
+      if (textInput.selectionStart !== undefined) {
+        startPosition = textInput.selectionStart;
+        let currentText = textInput.value;
+        if (currentText.length) {
+          textInput.value = currentText.substring(0,startPosition); 
+          textInput.value += value;
+          textInput.value += currentText.substring(startPosition);
+          textInput.selectionEnd = startPosition + 1;
+          textInput.selectionStart = textInput.selectionEnd;
+          textInput.focus();
+        } else {
+          textInput.value += value;
+       }
+      }
     }
 
-    const capsClickHandler = (event) => {
+    const capsClickHandler = () => {
       this.toggleCapsLock();
     }
 
@@ -461,6 +510,8 @@ class VirtualKeyboard {
       let code = el.dataset.code;
       if (Number(code) === 20) {
         el.addEventListener("click",  capsClickHandler);
+      } else if (Number(code) === 8) {
+        el.addEventListener("click",  backspaceClickHandler);
       } else {
         el.addEventListener("click", keyClickHandler);
       }
