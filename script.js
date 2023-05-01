@@ -1,5 +1,5 @@
 class VirtualKeyboard {
-  constructor(){
+  constructor(lang='en'){
     this.keys = [
       {
         "code": 192,
@@ -380,17 +380,25 @@ class VirtualKeyboard {
         "class": "key"
       },
     ];
+    this.lang = lang;
   }
 
-  renderKeyboard(lang='en'){
+  init() {
+    this.renderKeyboard();
+    this.setUpGeneralEvents();
+    this.setUpClickEvents();
+  }
+
+  renderKeyboard(){
     const keys = this.keys;
     const body = document.querySelector("body");
+    const lang = this.lang;
     let keyboard = "<div class='wrap'><h1 class='header'>RSS Виртуальная клавиатура</h1>";
-    keyboard += "<textarea id='text-input' rows='20' cols='50'></textarea>";
+    keyboard += "<textarea id='text-input' rows='15' cols='50'></textarea>";
     keyboard += "<div class='keyboard'>";
     keys.forEach(keyObject => {
       let value = keyObject[lang];
-      keyboard += `<span data-code="${keyObject['code']}" class="${keyObject['class']}">${value}</span>`;
+      keyboard += `<span data-code="${keyObject['code']}" data-value="${value}" class="${keyObject['class']}">${value}</span>`;
     });
     keyboard += "</div>";
     keyboard += "<p class='info'>Клавиатура создана в операционной системе Linux</p>";
@@ -398,7 +406,42 @@ class VirtualKeyboard {
     keyboard += "</div>";
     body.innerHTML = keyboard;
   }
-}
+
+  setUpGeneralEvents(){
+    const textInput = document.querySelector('#text-input');
+
+    document.addEventListener("keydown", (e) => {
+      let code = e.key;
+      e.preventDefault();
+      let element = document.querySelector(`[data-value="${code}"]`);
+      if (element){
+        textInput.innerHTML += element.dataset.value;
+        element.classList.add("active-key");
+      }
+    });
+
+    document.addEventListener("keyup", () => {
+      let element = document.querySelector('.active-key');
+      if (element){
+        element.classList.remove("active-key");
+      }
+    });
+  }
+
+  setUpClickEvents(){
+    let textInput = document.querySelector('#text-input');
+
+    const keyClickHandler = (event) => {
+      let element = event.target;
+      textInput.innerHTML += element.innerHTML;
+    }
+    const keys = document.querySelectorAll('.key');
+    keys.forEach(function (el) {
+      el.addEventListener("click", keyClickHandler);
+    });
+  };
+  
+  }
 
 let virtualKeyboard = new VirtualKeyboard();
-virtualKeyboard.renderKeyboard();
+virtualKeyboard.init();
