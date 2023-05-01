@@ -1,5 +1,5 @@
 class VirtualKeyboard {
-  constructor(lang='en'){
+  constructor(){
     this.keys = [
       {
         "code": 192,
@@ -380,7 +380,17 @@ class VirtualKeyboard {
         "class": "key"
       },
     ];
-    this.lang = lang;
+    // let currentCookies = document.cookie.split(';');
+    // let cookieLang = '';
+    // for(let i = 0; i < currentCookies.length; i++) {
+    //   let c = currentCookies[i];
+    //   if (c.indexOf("lang=") == 0) {
+    //     cookieLang = c.substring("lang=".length, c.length);
+    //   }
+    // }
+    let lang = localStorage.getItem('lang');
+
+    this.lang = lang ? lang : 'en';
   }
 
   init() {
@@ -424,8 +434,12 @@ class VirtualKeyboard {
 
       if (e.ctrlKey && e.altKey) {
         this.lang  =  (this.lang === 'en') ? 'ru' : 'en';
+        // document.cookie = "lang=" + this.lang;
+        localStorage.setItem('lang', this.lang);
         this.switchLanguage();
-      }  else if (e.code === "Enter") {
+      }  
+
+      if (e.code === "Enter") {
         element = document.querySelector('[data-code="13"]');
       }  else if (e.code === "Backspace") {
         element = document.querySelector('[data-code="8"]');
@@ -465,6 +479,19 @@ class VirtualKeyboard {
 
   setUpClickEvents(){
     let textInput = document.querySelector('#text-input');
+
+    const tabClickHandler = () => {
+      if (textInput.selectionStart !== undefined) {
+        let startPosition = textInput.selectionStart;
+        let currentText = textInput.value;
+        textInput.value = currentText.substring(0,startPosition);
+        textInput.value += "    ";
+        textInput.value += currentText.substring(startPosition);
+        textInput.selectionEnd = startPosition + 4;
+        textInput.selectionStart = textInput.selectionEnd;
+        textInput.focus();
+      }
+    }
 
     const backspaceClickHandler = () => {
       if (textInput.selectionStart !== undefined) {
@@ -512,6 +539,8 @@ class VirtualKeyboard {
         el.addEventListener("click",  capsClickHandler);
       } else if (Number(code) === 8) {
         el.addEventListener("click",  backspaceClickHandler);
+      } else if (Number(code) === 9) {
+        el.addEventListener("click",  tabClickHandler);
       } else {
         el.addEventListener("click", keyClickHandler);
       }
