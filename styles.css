@@ -71,7 +71,8 @@ body {
 }
 
 .key:active,
-.active-key {
+.active-key,
+.active-caps {
   color: #fc0303;
   border: 1px solid #fc0303;
   border-radius: 25%;

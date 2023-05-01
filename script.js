@@ -298,7 +298,7 @@ class VirtualKeyboard {
       {
         "code": 188,
         "en": ",",
-        "ru": "ю",
+        "ru": "б",
         "class": "key"
       },
       {
@@ -398,11 +398,15 @@ class VirtualKeyboard {
     keyboard += "<div class='keyboard'>";
     keys.forEach(keyObject => {
       let value = keyObject[lang];
-      keyboard += `<span data-code="${keyObject['code']}" data-value="${value}" class="${keyObject['class']}">${value}</span>`;
+      let dataValue = value;
+      if (keyObject['code'] === 32){
+        dataValue = " ";
+      }
+      keyboard += `<span data-code="${keyObject['code']}" data-value="${dataValue}" class="${keyObject['class']}">${value}</span>`;
     });
     keyboard += "</div>";
-    keyboard += "<p class='info'>Клавиатура создана в операционной системе Linux</p>";
-    keyboard += "<p class='info'>Для переключения языка комбинация: Win + space</p>"
+    keyboard += "<p class='info'>Клавиатура создана в операционной системе Windows</p>";
+    keyboard += "<p class='info'>Для переключения языка комбинация: ctrl + alt</p>"
     keyboard += "</div>";
     body.innerHTML = keyboard;
   }
@@ -412,7 +416,13 @@ class VirtualKeyboard {
 
     document.addEventListener("keydown", (e) => {
       let code = e.key;
+      console.log(code);
       e.preventDefault();
+      if (e.ctrlKey && e.altKey) {
+        this.lang  =  (this.lang === 'en') ? 'ru' : 'en';
+        this.switchLanguage();
+      } 
+
       let element = document.querySelector(`[data-value="${code}"]`);
       if (element){
         textInput.innerHTML += element.dataset.value;
@@ -420,7 +430,11 @@ class VirtualKeyboard {
       }
     });
 
-    document.addEventListener("keyup", () => {
+    document.addEventListener("keyup", (e) => {
+      if ((e.code === "CapsLock") && e.getModifierState("CapsLock")) {
+        this.toggleCapsLock();
+      }
+      
       let element = document.querySelector('.active-key');
       if (element){
         element.classList.remove("active-key");
@@ -433,13 +447,58 @@ class VirtualKeyboard {
 
     const keyClickHandler = (event) => {
       let element = event.target;
-      textInput.innerHTML += element.innerHTML;
+      let value = element.dataset.value;
+      textInput.innerHTML += value;
     }
+
+    const capsClickHandler = (event) => {
+      this.toggleCapsLock();
+    }
+
     const keys = document.querySelectorAll('.key');
+
     keys.forEach(function (el) {
-      el.addEventListener("click", keyClickHandler);
+      let code = el.dataset.code;
+      if (Number(code) === 20) {
+        el.addEventListener("click",  capsClickHandler);
+      } else {
+        el.addEventListener("click", keyClickHandler);
+      }
     });
   };
+
+  switchLanguage(){
+    const keys = this.keys;
+    const lang = this.lang;
+    keys.forEach(keyObject => {
+      if (keyObject['en'] !== keyObject['ru']){
+        let value = keyObject[lang];
+        let key = document.querySelector(`[data-code="${keyObject['code']}"]`)
+        key.innerHTML = value;
+        key.dataset.value = value;
+      }
+    });
+  }
+
+  toggleCapsLock(){
+    let capsLock = document.querySelector('[data-code="20"]');
+    capsLock.classList.toggle("active-caps");
+    const keys = this.keys;
+    const lang = this.lang;
+    keys.forEach(keyObject => {
+      if (keyObject['en'] !== keyObject['ru']){
+        let value = keyObject[lang];
+        let key = document.querySelector(`[data-code="${keyObject['code']}"]`)
+        if ( capsLock.classList.contains("active-caps") ) {
+          key.innerHTML = value.toUpperCase();
+          key.dataset.value = value.toUpperCase();
+        } else {
+          key.innerHTML = value.toLowerCase();
+          key.dataset.value = value.toLowerCase();
+        }
+      }
+    });
+  }
   
   }
 
